@@ -17,7 +17,7 @@ res.status(201).json(newTodo);
 app.get('/',(req,res) => {
 res.send('Merhaba, to-do backend çalışıyor.');
 });
-app.listen(300, () => {
+app.listen(3000, () => {
 console.log('Sunucu 3000 portunda çalışıyor.');
 });
 

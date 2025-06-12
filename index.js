@@ -1,9 +1,11 @@
 const Todo = require("./models/Todo"); // Todo modeli projeye dahil edildi.
 require("dotenv").config(); // .env dosayasını index.js dosyasına dahil ettim.
 const express = require("express"); // express framework'ünü projeye dahil ettim.
+const cors = require('cors');
 const mongoose = require("mongoose"); // MongoDB bağlantısı için mongoose kütüphanesini dahil ettim.
 const app = express(); // express uygulamasını(app) başalttım.
 app.use(express.json()); // Sunucuya gelen verileri kolayca okuyabilmek için JSON formatına çevirir.
+app.use(cors());
 mongoose
   .connect(process.env.MONGO_URL) // .env dosyasındaki MONGO_URL ile MongoDB'ye bağlanıyor.
   .then(() => console.log("MongoDB bağlantısı başarılı!")) // Bağlantı başarılıysa bu mesajı yazdırır.
@@ -96,10 +98,9 @@ app.get("/", (req, res) => {
   // Ana sayfa için GET endpoint'i.
   res.send("Merhaba, To-Do backend çalışıyor."); // Ana sayfada karşılama için mesaj döner.
 });
-app.listen(3000, () => {
-  // Sunucuyu 3000 portunda dinlemeye başlar.
-  console.log("Sunucu 3000 portunda çalışıyor."); // Sunucu başarılı bir şekilde çalıştığında konsola bu mesaj yazdırır.
+app.listen(5000, () => {
+  // Sunucuyu 5000 portunda dinlemeye başlar.
+  console.log("Sunucu 5000 portunda çalışıyor."); // Sunucu başarılı bir şekilde çalıştığında konsola bu mesaj yazdırır.
 });
 
 // Kodun düzenli ve okunabilir olması için otomatik formatlama işlemi uyguladım.
-

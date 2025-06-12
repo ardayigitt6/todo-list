@@ -18,6 +18,7 @@
   "homepage": "https://github.com/ardayigitt6/todo-list-backend#readme",
   "description": "",
   "dependencies": {
+    "cors": "^2.8.5",
     "dotenv": "^16.5.0",
     "express": "^5.1.0",
     "mongodb": "^6.17.0",

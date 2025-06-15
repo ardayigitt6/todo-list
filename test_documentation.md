@@ -48,7 +48,7 @@
 - **Beklenen:** 400 Hatası ve “Başlık gerekli!” mesajı.
 
 ## 4. Test Sonuçları
-- [x] Tüm testler başarıyla geçti.
+- Tüm testler başarıyla geçti.
 
 ## 5. Notlar
 - Her endpoint hem Postman hem React arayüzü ile test edildi.

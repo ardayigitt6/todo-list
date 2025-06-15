@@ -1,4 +1,4 @@
-# 📝 To-Do List Projesi Test Dokümanı
+# To-Do List Projesi Test Dokümanı
 
 ## 1. Proje Bilgileri
 - **Proje Adı:** To-Do List (Node.js + React + MongoDB)

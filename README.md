@@ -24,7 +24,7 @@ Kullanıcılar yeni görev ekleyebilir, güncelleyebilir, tamamlandığını iş
 3. .env dosyası oluştur ve içerisine şunu ekle:
     MONGO_URL=your_mongodb_connection_string
 4. Sunucuyu başlat.
-   ```sh
+   ```sh```
     node index.js
     Sunucu başarılı şekilde başlarsa:'Sunucu 5000 portunda çalışıyor.'mesajını görmelisin.
 

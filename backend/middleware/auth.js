@@ -22,4 +22,3 @@ async function auth(req, res, next) { // Middleware fonksiyonu oluşturuldu. Bu 
 module.exports = auth; // Başka dosyalarda kullabilmesi için auth middleware fonksiyonu dışa aktarıldı.
 
 
-

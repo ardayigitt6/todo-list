@@ -45,9 +45,9 @@ app.post("/login", async (req, res) => { // login endpointine POST isteği geldi
     if (!user) return res.status(400).json({ error: "Bu username (kullanıcı ismi) ile kayıtlı kullanıcı bulunamadı !!!" }); // Eğer kullanıcı bulunamazsa, error mesajı döner.
     const isMatch = await bcrypt.compare(password, user.password); // Girilen şifre ile veritabanındaki kayıtlı olan hashlenmiş şifreyle karşılaştırılır.
     if (!isMatch) return res.status(400).json({ error: "Girilen şifre yanlış!." }); // Eğer şifrelre birbiriyle eşleşmezse error mesajı döner.
-    const token = jwt.sign({ userId: user._id, username: user.username }, process.env.JWT_SECRET, { expiresIn: "7d" });
-    // Eğer şifre doğruysa JWT token oluşturulur. userId ve username payload olarak eklenir, secret_key ile sign yapılır ve expiresIn ile options yapılır yanş token'ın geçerlilik süresi 1 gün olarak ayarlanır.
-    await UserToken.create({ userId: user._id, token: token }); // Kullanıcı token'ı veritabanına kaydedilir.
+    const token = jwt.sign({ owner: user._id, username: user.username }, process.env.JWT_SECRET, { expiresIn: "7d" });
+    // Eğer şifre doğruysa JWT token oluşturulur. owner ve username payload olarak eklenir, secret_key ile sign yapılır ve expiresIn ile options yapılır yanş token'ın geçerlilik süresi 1 gün olarak ayarlanır.
+    await UserToken.create({ owner: user._id, token: token }); // Kullanıcı token'ı veritabanına kaydedilir.
     res.json({ token }); //Oluşturulan token JSON formatında döndürülür.
   } catch (error) {
     res.status(500).json({ error: "Sunucu hatası !!" }); // Eğer bir hata oluşursa, error mesajı döner.
@@ -71,7 +71,7 @@ app.get("/todos", auth, async (req, res) => {
 
     const skip = (page - 1) * limit; // İstenen sayfaya kadar kaç tane todo'nun atlayacağını hesaplar.
 
-    const query = { userId: req.user.userId, ...(search ? { title: { $regex: search, $options: "i" } } : {}) };
+    const query = { owner: req.user.owner, ...(search ? { title: { $regex: search, $options: "i" } } : {}) };
     //query nesnesi oluşturuldu. title alanında search kelimeyi arar, regex (regular expression=düzenli ifade) ile arar.
     //$options: "i" kısmında ise büyük-küçük harf duyarsız (case-insensitive) vardır.Yani bu satırda amaç title'da aradığın kelimeleri geçen todo'ları bulmaktır.
     // Eğer arama yoksa tüm todo'ları getirir.
@@ -104,7 +104,7 @@ app.post("/todos", auth, async (req, res) => {
   }
   try {
     // Hataları kontrol etmek için, eğer hata varsa catch devreye girer.
-    const newTodo = new Todo({ title, userId: req.user.userId }); // yeni bir Todo nesnesi oluşturuldu.
+    const newTodo = new Todo({ title, owner: req.user.owner }); // yeni bir Todo nesnesi oluşturuldu.
     await newTodo.save(); // nesneyi mongodb'ye kaydeder.
     res.status(201).json(newTodo); // Yeni todo'yu 201 Created status kodu ile döndürür..
   } catch (error) {
@@ -123,7 +123,7 @@ app.put("/todos/:id", auth, async (req, res) => {
   try {
     // Hataları kontrol etmek için, eğer hata varsa catch devreye girer.
     const updatedTodo = await Todo.findOneAndUpdate(
-      { _id: id, userId: req.user.userId },
+      { _id: id, owner: req.user.owner },
       { title },
       { new: true }
     ); // Güncenlenecek todo'nun id, başlık ve güncellenmiş halini döndürür.
@@ -142,7 +142,7 @@ app.delete("/todos/:id", auth, async (req, res) => {
   const { id } = req.params; // İstek parametrelerinden id'yi alır.
   try {
     // Hataları kontrol etmek için, eğer hata varsa catch devreye girer.
-    const deletedTodo = await Todo.findOneAndDelete({ _id: id, userId: req.user.userId }); // Verilen id ile todo'yu bulup siler.
+    const deletedTodo = await Todo.findOneAndDelete({ _id: id, owner: req.user.owner }); // Verilen id ile todo'yu bulup siler.
     if (!deletedTodo) {
       // Eğer silinecek todo bulunmazsa
       return res.status(404).json({ error: "Todo bulunmadı !" }); // 404 Not Found status kodu ile error döner.
@@ -157,7 +157,7 @@ app.patch("/todos/:id/complete", auth, async (req, res) => {
   // Bir todo'yu tamamlandı yapmak için PATCH endpoint'ini kullanıldı.
   const { id } = req.params; // İstek parametrelerinden id'yi alır.
   try {
-    const todo = await Todo.findOne({ _id: id, userId: req.user.userId });
+    const todo = await Todo.findOne({ _id: id, owner: req.user.owner });
     if (!todo) {
       return res.status(404).json({ error: "Todo bulunmadı !" });
     }

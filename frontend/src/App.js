@@ -7,8 +7,6 @@ function App() {
   const [authInfo, setAuthInfo] = useState({ username: "", password: "" });
   const [errorMsg, setErrorMsg] = useState("");
 
-
-
   const [todos, setTodos] = useState([]); // todos adında başlangıçta içi boş bir state tanımlandı, setTodos ise bu diziyi update eder.
   const [newTodo, setNewTodo] = useState(""); // Yeni bir todo eklerken input kısmına yazdığı metini state değişkeninde sakalar.
   const [search, setSearch] = useState(""); // Kullanıcının arama kısmına yazdığı şeyler burada tutuluyor.

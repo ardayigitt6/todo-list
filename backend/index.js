@@ -54,11 +54,13 @@ app.post("/login", async (req, res) => { // login endpointine POST isteği geldi
   }
 });
 
-app.post("/logout", auth, async (req, res) => {
-  const authHeader = req.headers.authorization;
-  const token = authHeader.split(" ")[1];
-  await UserToken.deleteOne({ token });
-  res.json({ message: "Çıkış yapıldı!" });
+app.post("/logout", auth, async (req, res) => { // logout endpointine POST isteği geldiğinde çalışır.Kullanıcı çıkış işlemi için kullanılır.
+  //auth middleware'i ile kimlik doğrulaması yapılır ve asenkron işlemler için async kullanıldı.
+  const authHeader = req.headers.authorization; //request headers'dan authorization bilgisi alınır ve token çekilir.
+  const token = authHeader.split(" ")[1]; // .split() fonksiyonu ile bölüp ikinci elemanı alır yani token'ı alır.
+  await UserToken.deleteOne({ token }); // Kullancıya giriş yaparken oluşturulan token kullanıcı çıkış yapmak istediğinde veritabanından silinir.
+  //await ile işlemin bitmesi beklenir.
+  res.json({ message: "Çıkış yapıldı!" }); // Çıkış işlemi başarılı ise bu mesaj döner.
 });
 
 app.get("/todos", auth, async (req, res) => {
@@ -122,10 +124,10 @@ app.put("/todos/:id", auth, async (req, res) => {
   }
   try {
     // Hataları kontrol etmek için, eğer hata varsa catch devreye girer.
-    const updatedTodo = await Todo.findOneAndUpdate(
-      { _id: id, owner: req.user.owner },
-      { title },
-      { new: true }
+    const updatedTodo = await Todo.findOneAndUpdate( //findOneAndUpdate methoodu ile verilen id'ye sahip todo'yu bulur ve günceller.
+      { _id: id, owner: req.user.owner }, //_id ile verilen id'ye sahip todo'yu bulur ve owner ile de kimlik doğrulaması yapar.
+      { title }, //Güncellenmiş son title'ı alır.
+      { new: true } //Güncelleme işlemi bittikten sonra yeni halini döndürür.
     ); // Güncenlenecek todo'nun id, başlık ve güncellenmiş halini döndürür.
     if (!updatedTodo) {
       // Eğer güncenlenmemiş todo bulunamazsa error döndürür.
@@ -157,15 +159,16 @@ app.patch("/todos/:id/complete", auth, async (req, res) => {
   // Bir todo'yu tamamlandı yapmak için PATCH endpoint'ini kullanıldı.
   const { id } = req.params; // İstek parametrelerinden id'yi alır.
   try {
-    const todo = await Todo.findOne({ _id: id, owner: req.user.owner });
-    if (!todo) {
-      return res.status(404).json({ error: "Todo bulunmadı !" });
+    const todo = await Todo.findOne({ _id: id, owner: req.user.owner }); //Verilen id ile eşleşen aynı todo'yu bulur ve owner ile de kimlik doğrulaması yapar.
+    if (!todo) { // Eğer todo bulunamazsa
+      return res.status(404).json({ error: "Todo bulunmadı !" }); //404 Not Found status ile error döner.
     }
 
-    todo.completed = !todo.completed;
-    await todo.save();
+    todo.completed = !todo.completed; // Todo'nun tamamlanma durumunu tersine çevirir. Yani eğer tamamlandı ise tamamlanmadı yapar, eğer tamamlanmadı ise tamamlandı yapar.
+    // kısaca toggle işlemi yapar.
+    await todo.save(); // Güncellenmiş todo'yu veritabanına kaydeder.
 
-    res.json(todo);
+    res.json(todo); // Güncellenmiş todo'yu JSON formatında döndürür.
   } catch (error) {
     res.status(500).json({ error: "Sunucu hatası !!" }); //Kodda hata olursa,"500 Sunucu hatası !!" mesajını gönderilir.
   }

@@ -17,133 +17,145 @@ function App() {
   const [editId, setEditId] = useState(null); // Todo'yu düzenlemek için seçilen todo'nun id'sini tutar, eğer düzenleme yapılmıyorsa otamatik olarak boş olur.
   const [editTitle, setEditTitle] = useState(""); // Todo'yu düzenlerken input kısmına yazdığın yazıyı/texti tutar.
 
-  const handleLoginOrRegister = (e) => {
-    e.preventDefault();
-    setErrorMsg("");
-    if (!authInfo.username.trim() || !authInfo.password.trim()) {
-      setErrorMsg("Kullanıcı adı ve şifre boş olamaz!");
-      return;
+  const handleLoginOrRegister = (e) => { // Giriş yapma veya kayıt olma işlemini gerçekleştiren fonksiyon. (e) (event object) yani olay parametresidir.
+    e.preventDefault(); // Sayfanın yenilenmesini engeller, form submit edildiğinde varsayılan davranışı durdurur. 
+    setErrorMsg(""); // Hata mesajını temizler, böylece önceki hata mesajı kaybolur sadece hata olursa gösterilir.
+    if (!authInfo.username.trim() || !authInfo.password.trim()) { //Eğer username veya password boşsa veya sadece boşluk varsa işlem durur.
+      //trim() methoduyla başındaki ve sonundaki boşluklar silinir.
+      setErrorMsg("Kullanıcı adı ve şifre boş olamaz!"); // Hata mesajı döner.
+      return; // 
     }
-    const url = loginMode
+    const url = loginMode // loginMode değişkinen bakılır,eğer true ise login işlemi yapılacak,false ise register işlemi yapılacak.
       ? "http://localhost:5000/login"
       : "http://localhost:5000/register";
-    fetch(url, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(authInfo),
+    fetch(url, { // Belirlediğimiz login veya register adresi ile backend'e fetch fonksiyonu ile istek atılır.
+      method: "POST", // HTTP isteğinin türü POST olarak ayarlanır.
+      headers: { "Content-Type": "application/json" }, // Gönderilen verinin JSON formatında olduğunu gösterir.
+      body: JSON.stringify(authInfo), // Gönderilecek veriyi authInfo nesnesini JSON'a çevirir ve body kısmına ekler.
+      //authInfo username ve password içerir.
     })
-      .then(async (res) => {
-        const data = await res.json();
-        if (!res.ok) {
-          setErrorMsg(data.error || "Bir hata oluştu!");
+      .then(async (res) => { // Gelen cevabı bekler ve cevap gelince then bloğu asenkron olarak işleme alır.
+        const data = await res.json(); //Gelen cevabı JSON formatına çevirir ayrıca data değişkenine atar.
+        if (!res.ok) { // Eğer request başarılı değilse 
+          setErrorMsg(data.error || "Bir hata oluştu!"); // Hata mesajını data.error'dan alır veya bu hata mesajı gösterir.
           return;
         }
-        if (loginMode) {
-          setToken(data.token);
-          localStorage.setItem("token", data.token);
-        } else {
-          setLoginMode(true);
-          setAuthInfo({ username: "", password: "" });
-          setErrorMsg("Kayıt başarılı! Giriş yapabilirsin.");
+        if (loginMode) { // Eğer loginMode true ise yani giriş yapılıyorsa
+          setToken(data.token); // Token'ı state'e kaydeder bu token backend'deki kullanıcıyı tanımlamak için kullanılır
+          localStorage.setItem("token", data.token); //Token'ı localStorage'a kaydeder, böylece sayfa yenilense bile token kaybolmaz.
+        } else { // Eğer loginMode false ise yani kayıt olma işlemi yapılıyorsa
+          setLoginMode(true); // Kayıt işlemi başarılı olduktan sonra loginMode'yi true yapar böylece kullanıcı giriş yapma aşamsına geçer.
+          setAuthInfo({ username: "", password: "" }); // Kayıt işlemi başarılı olduktan sonra authInfo state'ini temizler, böylece input kutuları boş kalır, kullanıcı yeni bir giriş yapabilir.
+          setErrorMsg("Kayıt başarılı! Giriş yapabilirsin."); //Kayıt işlemi başarılı olduktan sonra kullanıcıya başarılı mesajı döner.
         }
       })
-      .catch(() => setErrorMsg("Sunucuya ulaşılamadı!"));
+      .catch(() => setErrorMsg("Sunucuya ulaşılamadı!"));// Eğer fetch isteği sırasında bir hata olursa error mesajı döner.
   };
 
 
   useEffect(() => {
     // Bileşen ilk yüklendiğinde veya page,limit,search değişince çalışacak bir effect tanımlandı.İçinde API'ya istek atılır.
     if (!token) return; // Eğer token yoksa yani kullanıcı giriş yapmamışsa todos'u çekme işlemi yapılmaz.
-    fetch(
+    fetch( // fetch fonksiyonu ile backend'e istek atılır.
       `http://localhost:5000/todos?page=${page}&limit=${limit}&search=${search}`,
       {
         headers: { Authorization: "Bearer " + token },
+        //Authorization header'ı ile token gönderilir, böylece backend'deki kullanıcı doğrulaması yapılır.
       }
     )
-      // Belirtilen adrese get isteği atar ve backend'de ki tüm todo'ları ve pagination bilgilerini çeker
+
       .then((res) => res.json()) // Gelen cevabı JSON formatına döndürür.
-      .then((data) => {
-        if (data.error) {
-          setErrorMsg(data.error);
-          setTodos([]);
-          setTotalTodos(0);
-          setTotalPages(1);
-        } else {
-          setTodos(data.todos); // Cevap gelince seTodos state'ini günceller.
-          setTotalTodos(data.totalTodos); // Cevap gelince setTotalTodos state'ini günceller.
-          setTotalPages(data.totalPages); // Cevap gelince setTotalPages state'ini günceller.
+      .then((data) => { // Gelen datayı işleme alır.
+        if (data.error) { // Eğer backend'den bir hata mesajı gelirse yani data.error varsa
+          setErrorMsg(data.error);// Hata mesajını state'e kaydeder.
+          setTodos([]); // Cevap gelince todos state'ini boş bir dizi olarak ayarlar çünkü hata varsa todo'lar gösterilmez.
+          setTotalTodos(0); //Cevap gelince setTotalTodos state'ini 0 olarak ayarlar çünkü hata varsa toplam todo sayısı 0'dır.
+          setTotalPages(1); // Cevap gelince setTotalPages state'ini 1 olarak ayarlanır çünkü hata varsa toplam sayfa sayısı 1'den başlar.
+        } else { // Eğer hata yoksa yani data.error yoksa
+          setTodos(data.todos); // Gelen todos listesini todos state'ine kaydedilir ve liste güncellenir.
+          setTotalTodos(data.totalTodos); // Backend'den gelen toplam todo sayısını totalTodos state'ine kaydedilir ve sayfadaki todolar güncellenir.
+          setTotalPages(data.totalPages); //Backend'den gelen toplam sayfa sayısını totalPages state'ine kaydedilir ve sayfadaki sayfa sayısı güncellenir.
         }
       });
   }, [page, limit, search, token]); // page,limit veya search değiştiğinde bu effect tekrar çalışır ve yeni todo verilerini çeker.
 
-  if (!token) {
+  if (!token) { // Eğer token yoksa yani kullanıcı giriş yapmamışsa
     return (
       <div style={{ maxWidth: 400, margin: "40px auto", padding: 16 }}>
-        <h1>To-Do App</h1>
+        {/* div yani oluşturulan kutunun genişliği max 400 piksel,üsten boşluk 40 piksel yatayda ise ortalansın, kutunun içindeki kenarlar arasında ki boşul 16 piksel ayarlandı. */}
+        <h1>To-Do App</h1> {/* Başlık kısmı To-Do App olarak ayarlandı. */}
         {errorMsg && (
           <div style={{ color: "red", marginBottom: 10 }}>{errorMsg}</div>
+          // Eğer errorMsg varsa yani bir hata mesajı varsa bu kırmızı renkte ve alt boşluk 10 piksel olan bir div içinde gösterilir.
         )}
         <h2>{loginMode ? "Giriş Yap" : "Kayıt Ol"}</h2>
+        {/*Eğer loginMode true ise "Giriş Yap" yazısı,false ise "Kayıt Ol" yazısı gösterilir.*/}
         <form onSubmit={handleLoginOrRegister}>
-          <div style={{ marginBottom: 8 }}>
+          {/* Form submit edildiğinde handleLoginOrRegister fonksiyonu çağrılır. */}
+          <div style={{ marginBottom: 8 }}> {/* Kullanıcı adı inputu için bir div oluşturuldu ve alt boşluğu 8 piksel ayarlandı. */}
+
             <input
-              type="text"
-              placeholder="Kullanıcı Adı"
-              value={authInfo.username}
-              onChange={(e) => {
+              type="text" // Normal metin kutusu, kullanıcı adı girmek için kullanılır.
+              placeholder="Kullanıcı Adı" // Input kutusunun içinde silik yazı olarak "Kullanıcı Adı" yazısı gösterilir.
+              value={authInfo.username} // Input kutusunun value'si authInfo nesnesindeki username'den gelir.
+              onChange={(e) => { // Her tuşa basıldığında bu fonksiyon çalışır.Girilen değeri alıp eski state'i korur sadece username'i günceller ve ekranda hata mesajı varsa temizler.
                 setAuthInfo({ ...authInfo, username: e.target.value });
                 if (errorMsg) setErrorMsg("");
               }}
-              style={{ width: "100%", padding: 4 }}
+              style={{ width: "100%", padding: 4 }} // Input kutusunun boşluk %100 genişliğe ve 4 piksel iç boşluğa sahiptir.
             />
           </div>
-          <div style={{ marginBottom: 8 }}>
+          <div style={{ marginBottom: 8 }}> {/*div yani oluşturulan kutunun altına 8 piksellik boşluk ayalrndı. */}
             <input
               type="password"
-              placeholder="Şifre"
-              value={authInfo.password}
-              onChange={(e) => {
+              // Burası kullanıcıdan şifre almak için normal metin kutusudur.Bu inputa yazılanlar ekranda nokta veya yıldız olarak görünür.
+              placeholder="Şifre"  //Input kutusunun içinde silik yazı olarak "Şifre" yazısı gösterilir.
+              value={authInfo.password}  // Input kutusunun valuesi authInfo nesnesindeki passwordan geliyor.
+              onChange={(e) => { // Her tuşa basıldığında bu fonksiyon çalışır.Girilen değeri alıp eski state'i korur sadece password'u günceller ve ekranda hata mesajı varsa temizler.
                 setAuthInfo({ ...authInfo, password: e.target.value });
                 if (errorMsg) setErrorMsg("");
               }}
-              style={{ width: "100%", padding: 4 }}
+              style={{ width: "100%", padding: 4 }} //Input kutusunun boşluk %100 genişliğe ve 4 piksel iç boşluğa sahiptir.
             />
           </div>
           <button type="submit" style={{ width: "100%", padding: 8 }}>
+            {/* Formun altına eklenmiş button elementidir, butona tıklanınca submit etmeye yarar.Butonun genişliği %100 olsun ve iç kenar boşluğu 8 piksel olsun. */}
             {loginMode ? "Giriş Yap" : "Kayıt Ol"}
+            {/*Eğer loginMode true ise butonun üstünde giriş yap yazıyor false ise kayıt ol yazar. Yani login ve register arası geçişte butonun üstündeki yazı da değişiyor.*/}
           </button>
         </form>
         <button
-          onClick={() => {
-            setLoginMode((prev) => !prev);
-            setErrorMsg("");
+          onClick={() => { // Butona basınca çalışacak fonksiyon 
+            setLoginMode((prev) => !prev); //loginMode değişkenini terse çevirir. Login ise register'a, register ise login'e çevirir.
+            setErrorMsg(""); //Her ekrana geçişte hata mesajını sıfırlıyor. Eski hata mesajı ekranda kalmasın diye.
           }}
           style={{
-            marginTop: 10,
-            background: "#eee",
-            border: "none",
-            padding: 8,
-            width: "100%",
+            marginTop: 10, // Butonun üst tarafında 10 piksel boşluk bırakıyor.
+            background: "#eee", // Butonun arka planını açık griye boyar.
+            border: "none", //Kenar çizgisi yoktur.
+            padding: 8, //Butonun içinde 8 piksel iç boşluk bırakır.
+            width: "100%", //Buton kutunun içini %100 kaplar.
           }}
         >
           {loginMode ? "Kayıt Olmak İstiyorum" : "Girişe Dön"}
+          {/*Eğer loginMode true ise butonda “Kayıt Olmak İstiyorum” yazıyor, false ise "Girişe Dön" yazıyor.*/}
         </button>
       </div>
     );
   }
 
-  const handleLogout = () => {
-    localStorage.removeItem("token");
-    setToken("");
-    setTodos([]);
-    setErrorMsg("");
+  const handleLogout = () => { // Çıkış yap butonuna basınca bu fonksiyon çalışıcak.
+    localStorage.removeItem("token"); // token key'i ile kaydedilmiş veriyi silinir, artık kullanıcıyı tekrar otomatik tanınmaycak, yani otomatik giriş olmayacak.
+    setToken(""); //Token bilgisi temizlendi, boş string verilerek şuan giriş yapmış kullanıcı yok denir.
+    setTodos([]); // Dizinin içindeki todoları tamamen boşaltır.
+    setErrorMsg("");//Ekranda hata mesajı varsa onu temizler.
   };
 
   const handleAddTodo = (e) => {
     // Yeni bir todo ekleme işlemini gerçekleştiren fonksiyon. (e), olay parametresi (event object).
     e.preventDefault(); // Formun varsayılan davranışını yani sayfa yenilemeyi engeller.
     if (!newTodo.trim()) { // Eğer input'a hiçbir şey yazılmadıysa veya boş bırakıldıysa fonksiyon durur.
-      setErrorMsg("Başlık gerekli, lütfen bu alanı doldurun.!");
+      setErrorMsg("Başlık gerekli, lütfen bu alanı doldurun.!");// Error mesajı döner.
       return;
     }
 
@@ -154,18 +166,19 @@ function App() {
       body: JSON.stringify({ title: newTodo }), // Gönderilicek veriyi bir nesne olarak JSON string'e çevir ve isteiğini body kısmına ekler.
     })
       .then((res) => res.json()) // Gelen cevabı JSON formatına çevirir.
-      .then((added) => {
-        if (added.error) {
-          setErrorMsg(added.error);
+      .then((added) => { // JSON formatına çevirilmiş data bu fosnksiyonun içine parametre olarak gelir. 
+        if (added.error) { // Backend'de dönen JSON'da error diye bir alan var mı 
+          setErrorMsg(added.error); // eğer added.error varsa hata mesajı döner.
           return;
         }
-        // Backend'den gelen yeni newTodo nesnesi added olarak gelir.
+
         setNewTodo(""); // Input kutusu temizlenir böylece yeni todo yazılmak için hazır olur.
         setErrorMsg(""); // Hata mesajı temizlenir böylece yeni todo eklenince önceki hata mesajı kaybolur.
         setPage(1); // Sayfayı ilk başa döndürür.
         setSearch(""); // Arama kutusunu temizler.
         fetch(`http://localhost:5000/todos?page=1&limit=${limit}&search=`, {
           headers: { Authorization: "Bearer " + token },
+          //Authorization header'ı ile token gönderilir, böylece backend'deki kullanıcı doğrulaması yapılır.
         })
           .then((res) => res.json()) // cevapları JSON formatına çevirir.
           .then((data) => {
@@ -182,6 +195,7 @@ function App() {
       //Backend'e DELETE isteği gönderir.
       method: "DELETE", // HTTP isteiğinin türü DELETE olarak ayarlanır.
       headers: { Authorization: "Bearer " + token },
+      ////Authorization header'ı ile token gönderilir, böylece backend'deki kullanıcı doğrulaması yapılır.
     })
       .then((res) => res.json()) // Gelen cevabı JSON formatına çevirir.
       .then((result) => {
@@ -228,6 +242,7 @@ function App() {
     fetch(`http://localhost:5000/todos/${id}/complete`, {
       method: "PATCH", // HTTP isteiğinin türü PATCH olarak ayarlanır.
       headers: { Authorization: "Bearer " + token },
+      //Authorization header'ı ile token gönderilir, böylece backend'deki kullanıcı doğrulaması yapılır.
     })
       .then((res) => res.json()) // Gelen cevapları JSON formatına çevirir.
       .then((updated) => {

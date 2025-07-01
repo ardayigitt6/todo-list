@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react"; // React kütüphanesi ve gerekli hook'lar (useState,useEffect) içe aktarıldı.
+import React, { useState, useEffect, use } from "react"; // React kütüphanesi ve gerekli hook'lar (useState,useEffect) içe aktarıldı.
 function App() {
   // Ana fonksiyonel bileşen tanımlandı.
   const baseUrl = "http://localhost:5000"
@@ -7,6 +7,9 @@ function App() {
   const [authInfo, setAuthInfo] = useState({ username: "", password: "" });
   const [errorMsg, setErrorMsg] = useState("");
   const [hideCompleted, setHideCompleted] = useState(false);
+  const { apiFetch } = require("./apiFetch")
+  const [newestFirst, setNewestFirst] = useState(true)
+  const [searchTerm, setSearchTerm] = useState("");
 
   const [todos, setTodos] = useState([]); // todos adında başlangıçta içi boş bir state tanımlandı, setTodos ise bu diziyi update eder.
   const [newTodo, setNewTodo] = useState(""); // Yeni bir todo eklerken input kısmına yazdığı metini state değişkeninde sakalar.
@@ -27,20 +30,15 @@ function App() {
       return; // 
     }
     const url = loginMode // loginMode değişkinen bakılır,eğer true ise login işlemi yapılacak,false ise register işlemi yapılacak.
-      ? `${baseUrl}/login`
-      : `${baseUrl}/register`;
-    fetch(url, { // Belirlediğimiz login veya register adresi ile backend'e fetch fonksiyonu ile istek atılır.
+      ? `/login`
+      : `/register`;
+    apiFetch(url, { // Belirlediğimiz login veya register adresi ile backend'e fetch fonksiyonu ile istek atılır.
       method: "POST", // HTTP isteğinin türü POST olarak ayarlanır.
       headers: { "Content-Type": "application/json" }, // Gönderilen verinin JSON formatında olduğunu gösterir.
       body: JSON.stringify(authInfo), // Gönderilecek veriyi authInfo nesnesini JSON'a çevirir ve body kısmına ekler.
       //authInfo username ve password içerir.
     })
-      .then(async (res) => { // Gelen cevabı bekler ve cevap gelince then bloğu asenkron olarak işleme alır.
-        const data = await res.json(); //Gelen cevabı JSON formatına çevirir ayrıca data değişkenine atar.
-        if (!res.ok) { // Eğer request başarılı değilse 
-          setErrorMsg(data.error || "Bir hata oluştu!"); // Hata mesajını data.error'dan alır veya bu hata mesajı gösterir.
-          return;
-        }
+      .then(async (data) => { // Gelen cevabı bekler ve cevap gelince then bloğu asenkron olarak işleme alır.
         if (loginMode) { // Eğer loginMode true ise yani giriş yapılıyorsa
           setToken(data.token); // Token'ı state'e kaydeder bu token backend'deki kullanıcıyı tanımlamak için kullanılır
           localStorage.setItem("token", data.token); //Token'ı localStorage'a kaydeder, böylece sayfa yenilense bile token kaybolmaz.
@@ -50,35 +48,39 @@ function App() {
           setErrorMsg("Kayıt başarılı! Giriş yapabilirsin."); //Kayıt işlemi başarılı olduktan sonra kullanıcıya başarılı mesajı döner.
         }
       })
-      .catch(() => setErrorMsg("Sunucuya ulaşılamadı!"));// Eğer fetch isteği sırasında bir hata olursa error mesajı döner.
+      .catch((err) => {
+
+        setErrorMsg("Sunucuya ulaşılamadı!")
+      });// Eğer fetch isteği sırasında bir hata olursa error mesajı döner.
   };
 
-
   useEffect(() => {
-    // Bileşen ilk yüklendiğinde veya page,limit,search değişince çalışacak bir effect tanımlandı.İçinde API'ya istek atılır.
-    if (!token) return; // Eğer token yoksa yani kullanıcı giriş yapmamışsa todos'u çekme işlemi yapılmaz.
-    fetch( // fetch fonksiyonu ile backend'e istek atılır.
-      `${baseUrl}/todos?page=${page}&limit=${limit}&search=${search}&shouldHideCompleted=${hideCompleted.toString()}`,
-      {
-        headers: { Authorization: "Bearer " + token },
-        //Authorization header'ı ile token gönderilir, böylece backend'deki kullanıcı doğrulaması yapılır.
-      }
-    )
+    const timer = setTimeout(() => {
+      setSearch(searchTerm);
+      setPage(1);
+    }, 500);
+    return () => clearTimeout(timer);
+  }, [searchTerm]);
 
-      .then((res) => res.json()) // Gelen cevabı JSON formatına döndürür.
-      .then((data) => { // Gelen datayı işleme alır.
-        if (data.error) { // Eğer backend'den bir hata mesajı gelirse yani data.error varsa
-          setErrorMsg(data.error);// Hata mesajını state'e kaydeder.
-          setTodos([]); // Cevap gelince todos state'ini boş bir dizi olarak ayarlar çünkü hata varsa todo'lar gösterilmez.
-          setTotalTodos(0); //Cevap gelince setTotalTodos state'ini 0 olarak ayarlar çünkü hata varsa toplam todo sayısı 0'dır.
-          setTotalPages(1); // Cevap gelince setTotalPages state'ini 1 olarak ayarlanır çünkü hata varsa toplam sayfa sayısı 1'den başlar.
-        } else { // Eğer hata yoksa yani data.error yoksa
-          setTodos(data.todos); // Gelen todos listesini todos state'ine kaydedilir ve liste güncellenir.
-          setTotalTodos(data.totalTodos); // Backend'den gelen toplam todo sayısını totalTodos state'ine kaydedilir ve sayfadaki todolar güncellenir.
-          setTotalPages(data.totalPages); //Backend'den gelen toplam sayfa sayısını totalPages state'ine kaydedilir ve sayfadaki sayfa sayısı güncellenir.
+  // Fetch todos when relevant state changes
+  useEffect(() => {
+    if (!token) return; // Eğer token yoksa yani kullanıcı giriş yapmamışsa todos'u çekme işlemi yapılmaz.
+    apiFetch(
+      `/todos?page=${page}&limit=${limit}&search=${search}&shouldHideCompleted=${hideCompleted.toString()}&sortOrder=${newestFirst ? "desc" : "asc"}`
+    )
+      .then((data) => {
+        if (data.error) {
+          setErrorMsg(data.error);
+          setTodos([]);
+          setTotalTodos(0);
+          setTotalPages(1);
+        } else {
+          setTodos(data.todos);
+          setTotalTodos(data.totalTodos);
+          setTotalPages(data.totalPages);
         }
       });
-  }, [page, limit, search, token, hideCompleted]); // page,limit veya search değiştiğinde bu effect tekrar çalışır ve yeni todo verilerini çeker.
+  }, [page, limit, search, token, hideCompleted, newestFirst]);
 
   if (!token) { // Eğer token yoksa yani kullanıcı giriş yapmamışsa
     return (
@@ -162,13 +164,12 @@ function App() {
       return;
     }
 
-    fetch(`${baseUrl}/todos`, {
+    apiFetch(`/todos`, {
       //Backend'e yeni todo ekleme için POST isteği atar.
       method: "POST", // HTTP isteğinin türünü belirtir.Yeni veri eklemek için HTTP metodunu POST olarak ayarlar.
-      headers: { "Content-Type": "application/json", Authorization: "Bearer " + token }, // Gönderilen verinin JSON formatında olduğunu gösterir.
       body: JSON.stringify({ title: newTodo }), // Gönderilicek veriyi bir nesne olarak JSON string'e çevir ve isteiğini body kısmına ekler.
     })
-      .then((res) => res.json()) // Gelen cevabı JSON formatına çevirir.
+
       .then((added) => { // JSON formatına çevirilmiş data bu fosnksiyonun içine parametre olarak gelir. 
         if (added.error) { // Backend'de dönen JSON'da error diye bir alan var mı 
           setErrorMsg(added.error); // eğer added.error varsa hata mesajı döner.
@@ -179,11 +180,8 @@ function App() {
         setErrorMsg(""); // Hata mesajı temizlenir böylece yeni todo eklenince önceki hata mesajı kaybolur.
         setPage(1); // Sayfayı ilk başa döndürür.
         setSearch(""); // Arama kutusunu temizler.
-        fetch(`${baseUrl}/todos?page=1&limit=${limit}&search=`, {
-          headers: { Authorization: "Bearer " + token },
-          //Authorization header'ı ile token gönderilir, böylece backend'deki kullanıcı doğrulaması yapılır.
+        apiFetch(`/todos?page=1&limit=${limit}&search=`, {
         })
-          .then((res) => res.json()) // cevapları JSON formatına çevirir.
           .then((data) => {
             setTodos(data.todos); // Yeni eklenen todo'yu ve todos state'sini günceller.
             setTotalTodos(data.totalTodos); // Toplam todo sayısını günceller.
@@ -194,13 +192,10 @@ function App() {
 
   const handleDelete = (id) => {
     // Silme butonuna tıklanırsa todo'nun unique id'si ile, silme işlemi başlatır.
-    fetch(`${baseUrl}/todos/${id}`, {
+    apiFetch(`/todos/${id}`, {
       //Backend'e DELETE isteği gönderir.
       method: "DELETE", // HTTP isteiğinin türü DELETE olarak ayarlanır.
-      headers: { Authorization: "Bearer " + token },
-      ////Authorization header'ı ile token gönderilir, böylece backend'deki kullanıcı doğrulaması yapılır.
     })
-      .then((res) => res.json()) // Gelen cevabı JSON formatına çevirir.
       .then((result) => {
         // Bir üstteki then’den dönen veri burada result olarak alınır.
         if (result.error) {
@@ -219,12 +214,10 @@ function App() {
       setErrorMsg("Başlık gerekli, lütfen bu alanı doldurun.!");
       return;
     }
-    fetch(`${baseUrl}/todos/${id}`, {
+    apiFetch(`${baseUrl}/todos/${id}`, {
       method: "PUT", // HTTP isteiğinin türü PUT olarak ayarlanır.
-      headers: { "Content-Type": "application/json", Authorization: "Bearer " + token }, // Gönderilen verinin içeriğinin JSON formatında olduğunu gösterir.
       body: JSON.stringify({ title: editTitle }), // Güncelleme için yeni title içeren bir JSON string yapısında body kısmına ekler.strinfiy ile nesneyi JSON formatına çevirildi.
     })
-      .then((res) => res.json()) // Gelen cevapları JSON formatına çevirir.
       .then((updated) => {
         if (updated.error) {
           setErrorMsg(updated.error);
@@ -242,12 +235,9 @@ function App() {
 
   const handleComplete = (id) => {
     // Tamamlandı butonuna tıklanırsa todo'nun unique id'si ile tamamlanma işlemi başlatır.
-    fetch(`${baseUrl}/todos/${id}/complete`, {
+    apiFetch(`/todos/${id}/complete`, {
       method: "PATCH", // HTTP isteiğinin türü PATCH olarak ayarlanır.
-      headers: { Authorization: "Bearer " + token },
-      //Authorization header'ı ile token gönderilir, böylece backend'deki kullanıcı doğrulaması yapılır.
     })
-      .then((res) => res.json()) // Gelen cevapları JSON formatına çevirir.
       .then((updated) => {
         //Güncellenen todo nesnesi updated şekilde yazar.
         if (updated.error) {
@@ -284,26 +274,29 @@ function App() {
         />
         <button type="submit">Ekle</button>{" "}
         {/* Butona tıklayınca form submit edilir, handleAddTodo fonksiyonu çağırılır.*/}
-        <button
-          type="button"
-          onClick={() => {
-            setHideCompleted((prev) => !prev);
-            setErrorMsg("");
-          }}>
-          {hideCompleted ? "Tamamlanan Todoları Göster" : "Tamamlanan Todoları Gizle"}
-        </button>
       </form>
       <input
         type="text" // Normal yazı inputu, kullanıcıya arama imkanı verir.
         placeholder="Ara..." // Arama kutusu için placeholder.
-        value={search} // Değeri search state'inden gelir.
-        onChange={(e) => {
-          setSearch(e.target.value); // Her değişiklikte search güncellenir.
-          setPage(1); // Arama yapılınca sayfa 1'e çekilir.
-          if (errorMsg) setErrorMsg(""); // Eğer hata mesajı varsa temizlenir.
-        }}
+        value={searchTerm} // Değeri search state'inden gelir.
+        onChange={e => setSearchTerm(e.target.value)} // Her değişiklikte search güncellenir.
         style={{ marginTop: "10px", marginBottom: "10px" }} // Arama kutusunun üst-alt boşlukl ayarları.
       />
+      <button
+        type="button"
+        onClick={() => {
+          setHideCompleted((prev) => !prev);
+          setErrorMsg("");
+        }}>
+        {hideCompleted ? "Tamamlanan Todoları Göster" : "Tamamlanan Todoları Gizle"}
+      </button>
+      <button
+        type="button"
+        style={{ marginLeft: "10 px" }}
+        onClick={() => setNewestFirst((prev => !prev))}
+      >
+        {newestFirst ? "↕ Eski Todoları Göster" : "↕ Yeni Todoları Göster"}
+      </button>
       <ul>
         {" "}
         {/* unordered list yani todo maddelerini liste halinde gösterecek kapsayıcı, yapılacaklar listesi için bir sırasız liste */}

@@ -8,7 +8,6 @@ async function auth(req, res, next) { // Middleware fonksiyonu oluşturuldu. Bu 
         return res.status(401).json({ error: " Yetkisiz istek !" });   //Yani kullanıcı token göndermemişse veya yanlış bir token göndermişse bu hata mesajı döner. 
     }
     const token = authHeader.split(" ")[1]; //split fonsiyonu ile Bearer ve token ayrıştırıldı. [1] ile token kısmı alındı.
-    console.log(token)
     try { // Try-catch bloğu ile token doğrulaması yapıldı yani token veritabanında var mı diye kontrol edildi.
         const found = await UserToken.findOne({ token }); // UserToken'den bu token kayıtlı mı diye sorgulandı.
         if (!found) return res.status(401).json({ error: "Token geçersiz!!!" }); //Eğer token bulunamazsa yani veritabanında yoksa error mesajı döner.

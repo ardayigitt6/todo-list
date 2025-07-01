@@ -71,6 +71,7 @@ app.get("/todos", auth, async (req, res) => {
     const limit = parseInt(req.query.limit) || 10; // URL'den limit parametresi al, yoksa otomatik olarak 10'da olur.Yani her sayfada kaç tane todo olacağını belirliyor.
     const search = (req.query.search || "").trim(); //URL'den search parametresi alıyor, yoksa boş tring döner, burada mantık arama kelimesidir..trim() ile Elinde kalan stringin başındaki ve sonundaki boşlukları siler.
     const shouldHideCompleted = req.query.shouldHideCompleted === "true";
+    const sortOrder = req.query.sortOrder === "asc" ? 1 : -1;
     const skip = (page - 1) * limit; // İstenen sayfaya kadar kaç tane todo'nun atlayacağını hesaplar.
 
     const query = { owner: req.user.owner, ...(search ? { title: { $regex: search, $options: "i" } } : {}) };
@@ -83,10 +84,12 @@ app.get("/todos", auth, async (req, res) => {
     //$options: "i" kısmında ise büyük-küçük harf duyarsız (case-insensitive) vardır.Yani bu satırda amaç title'da aradığın kelimeleri geçen todo'ları bulmaktır.
     // Eğer arama yoksa tüm todo'ları getirir.
 
+
+    const todos = await Todo.find(query).sort({ createdAt: sortOrder }).skip(skip).limit(limit);
     const totalTodos = await Todo.countDocuments(query);
     // Veritabanında query'e göre kaç tane todo olduğunu sayar, await ile bitmesi beklenir sonuç sayı olarak döner.
     // Eğer arama varsa ona uygun olarak sadece filtrelenenlerin sayısını gösterir.
-    const todos = await Todo.find(query).skip(skip).limit(limit);
+
     //Veritabanında query ile todo'ları bulup, skip kısmıyla kaç kayıt atlanacağını ve limit kısmıylada kaç tane kayıt alınacağını ayarlıyor.
     //Yani pagination ve search kısmı birlikte uygulanıyor böylece sadece istenen arlıkta ki kayıtlar(todo'lar) dönüyor.
 

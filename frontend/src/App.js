@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from "react"; // React kütüphanesi ve gerekli hook'lar (useState,useEffect) içe aktarıldı.
 function App() {
   // Ana fonksiyonel bileşen tanımlandı.
-
+  const baseUrl = "http://localhost:5000"
   const [token, setToken] = useState(localStorage.getItem("token") || "");
   const [loginMode, setLoginMode] = useState(true); // true: login, false: register
   const [authInfo, setAuthInfo] = useState({ username: "", password: "" });
   const [errorMsg, setErrorMsg] = useState("");
+  const [hideCompleted, setHideCompleted] = useState(false);
 
   const [todos, setTodos] = useState([]); // todos adında başlangıçta içi boş bir state tanımlandı, setTodos ise bu diziyi update eder.
   const [newTodo, setNewTodo] = useState(""); // Yeni bir todo eklerken input kısmına yazdığı metini state değişkeninde sakalar.
@@ -26,8 +27,8 @@ function App() {
       return; // 
     }
     const url = loginMode // loginMode değişkinen bakılır,eğer true ise login işlemi yapılacak,false ise register işlemi yapılacak.
-      ? "http://localhost:5000/login"
-      : "http://localhost:5000/register";
+      ? `${baseUrl}/login`
+      : `${baseUrl}/register`;
     fetch(url, { // Belirlediğimiz login veya register adresi ile backend'e fetch fonksiyonu ile istek atılır.
       method: "POST", // HTTP isteğinin türü POST olarak ayarlanır.
       headers: { "Content-Type": "application/json" }, // Gönderilen verinin JSON formatında olduğunu gösterir.
@@ -57,7 +58,7 @@ function App() {
     // Bileşen ilk yüklendiğinde veya page,limit,search değişince çalışacak bir effect tanımlandı.İçinde API'ya istek atılır.
     if (!token) return; // Eğer token yoksa yani kullanıcı giriş yapmamışsa todos'u çekme işlemi yapılmaz.
     fetch( // fetch fonksiyonu ile backend'e istek atılır.
-      `http://localhost:5000/todos?page=${page}&limit=${limit}&search=${search}`,
+      `${baseUrl}/todos?page=${page}&limit=${limit}&search=${search}&shouldHideCompleted=${hideCompleted.toString()}`,
       {
         headers: { Authorization: "Bearer " + token },
         //Authorization header'ı ile token gönderilir, böylece backend'deki kullanıcı doğrulaması yapılır.
@@ -77,7 +78,7 @@ function App() {
           setTotalPages(data.totalPages); //Backend'den gelen toplam sayfa sayısını totalPages state'ine kaydedilir ve sayfadaki sayfa sayısı güncellenir.
         }
       });
-  }, [page, limit, search, token]); // page,limit veya search değiştiğinde bu effect tekrar çalışır ve yeni todo verilerini çeker.
+  }, [page, limit, search, token, hideCompleted]); // page,limit veya search değiştiğinde bu effect tekrar çalışır ve yeni todo verilerini çeker.
 
   if (!token) { // Eğer token yoksa yani kullanıcı giriş yapmamışsa
     return (
@@ -126,6 +127,7 @@ function App() {
         </form>
         <button
           onClick={() => { // Butona basınca çalışacak fonksiyon 
+            setAuthInfo({ username: "", password: "" })
             setLoginMode((prev) => !prev); //loginMode değişkenini terse çevirir. Login ise register'a, register ise login'e çevirir.
             setErrorMsg(""); //Her ekrana geçişte hata mesajını sıfırlıyor. Eski hata mesajı ekranda kalmasın diye.
           }}
@@ -148,6 +150,7 @@ function App() {
     localStorage.removeItem("token"); // token key'i ile kaydedilmiş veriyi silinir, artık kullanıcıyı tekrar otomatik tanınmaycak, yani otomatik giriş olmayacak.
     setToken(""); //Token bilgisi temizlendi, boş string verilerek şuan giriş yapmış kullanıcı yok denir.
     setTodos([]); // Dizinin içindeki todoları tamamen boşaltır.
+    setAuthInfo({ username: "", password: "" })
     setErrorMsg("");//Ekranda hata mesajı varsa onu temizler.
   };
 
@@ -159,7 +162,7 @@ function App() {
       return;
     }
 
-    fetch("http://localhost:5000/todos", {
+    fetch(`${baseUrl}/todos`, {
       //Backend'e yeni todo ekleme için POST isteği atar.
       method: "POST", // HTTP isteğinin türünü belirtir.Yeni veri eklemek için HTTP metodunu POST olarak ayarlar.
       headers: { "Content-Type": "application/json", Authorization: "Bearer " + token }, // Gönderilen verinin JSON formatında olduğunu gösterir.
@@ -176,7 +179,7 @@ function App() {
         setErrorMsg(""); // Hata mesajı temizlenir böylece yeni todo eklenince önceki hata mesajı kaybolur.
         setPage(1); // Sayfayı ilk başa döndürür.
         setSearch(""); // Arama kutusunu temizler.
-        fetch(`http://localhost:5000/todos?page=1&limit=${limit}&search=`, {
+        fetch(`${baseUrl}/todos?page=1&limit=${limit}&search=`, {
           headers: { Authorization: "Bearer " + token },
           //Authorization header'ı ile token gönderilir, böylece backend'deki kullanıcı doğrulaması yapılır.
         })
@@ -191,7 +194,7 @@ function App() {
 
   const handleDelete = (id) => {
     // Silme butonuna tıklanırsa todo'nun unique id'si ile, silme işlemi başlatır.
-    fetch(`http://localhost:5000/todos/${id}`, {
+    fetch(`${baseUrl}/todos/${id}`, {
       //Backend'e DELETE isteği gönderir.
       method: "DELETE", // HTTP isteiğinin türü DELETE olarak ayarlanır.
       headers: { Authorization: "Bearer " + token },
@@ -216,7 +219,7 @@ function App() {
       setErrorMsg("Başlık gerekli, lütfen bu alanı doldurun.!");
       return;
     }
-    fetch(`http://localhost:5000/todos/${id}`, {
+    fetch(`${baseUrl}/todos/${id}`, {
       method: "PUT", // HTTP isteiğinin türü PUT olarak ayarlanır.
       headers: { "Content-Type": "application/json", Authorization: "Bearer " + token }, // Gönderilen verinin içeriğinin JSON formatında olduğunu gösterir.
       body: JSON.stringify({ title: editTitle }), // Güncelleme için yeni title içeren bir JSON string yapısında body kısmına ekler.strinfiy ile nesneyi JSON formatına çevirildi.
@@ -239,7 +242,7 @@ function App() {
 
   const handleComplete = (id) => {
     // Tamamlandı butonuna tıklanırsa todo'nun unique id'si ile tamamlanma işlemi başlatır.
-    fetch(`http://localhost:5000/todos/${id}/complete`, {
+    fetch(`${baseUrl}/todos/${id}/complete`, {
       method: "PATCH", // HTTP isteiğinin türü PATCH olarak ayarlanır.
       headers: { Authorization: "Bearer " + token },
       //Authorization header'ı ile token gönderilir, böylece backend'deki kullanıcı doğrulaması yapılır.
@@ -281,6 +284,14 @@ function App() {
         />
         <button type="submit">Ekle</button>{" "}
         {/* Butona tıklayınca form submit edilir, handleAddTodo fonksiyonu çağırılır.*/}
+        <button
+          type="button"
+          onClick={() => {
+            setHideCompleted((prev) => !prev);
+            setErrorMsg("");
+          }}>
+          {hideCompleted ? "Tamamlanan Todoları Göster" : "Tamamlanan Todoları Gizle"}
+        </button>
       </form>
       <input
         type="text" // Normal yazı inputu, kullanıcıya arama imkanı verir.
@@ -343,9 +354,8 @@ function App() {
           {" "}
           {/* Sayfanın anlık olarak kaçıncı kayıtları gösterdiğini yazar. */}
           Sayfa başına satır: {""}
-          {totalTodos === 0 ? 0 : (page - 1) * limit + 1} - {""}
+          {totalTodos === 0 ? 0 : (page - 1) * limit + 1} - {Math.min(page * limit, totalTodos)} / {totalTodos}
           {/* Gösterilen ilk kayıt numarasıdır, eğer hiç kayıt yoksa 0 yazar. */}
-          {Math.min(page * limit, totalTodos)} / {totalTodos}
           {/* Gösterilen son sayfa numarasıdır, math.min fonk ile eğer son sayfa limitin katı değilse kaldı sayfa sayısında bırakır. */}
         </span>
         {""}
@@ -354,7 +364,8 @@ function App() {
           {/*eğer 1.sayfadaysan pasif olursun, fakat diğer sayfalardaysan butona tıklanır ve önceki sayfaya gider.*/}
           {"<"} {/*geri butonu*/}
         </button>
-        <button disabled={page >= totalPages} onClick={() => setPage(page + 1)}>
+        <button disabled={page
+          >= totalPages} onClick={() => setPage(page + 1)}>
           {" "}
           {/*eğer son sayfadaysan pasif olur, fakat diğer sayflardaysan butona tıklanır ve ileriki sayfaya gider.*/}
           {">"} {/*ileri butonu*/}

@@ -38,7 +38,7 @@ Kullanıcılar yeni görev ekleyebilir, güncelleyebilir, tamamlandığını iş
 3. React uygulamasını başlat:
     ```sh
     npm start
-    Tarayıcıda otomatik olarak 'localhost:3000' açılır.
+    Tarayıcıda otomatik olarak '192.168.68.65:3000' açılır.
 
 ---
 

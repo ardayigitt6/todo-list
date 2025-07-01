@@ -42,7 +42,7 @@ app.post("/login", async (req, res) => { // login endpointine POST isteği geldi
   const { username, password } = req.body; // Requestbody'den username ve password alınır.
   try { // Hataları kontrol etmek için tyr-catch bloğu kullanıldı.
     const user = await User.findOne({ username }); // Veritabanında username ile eşleşen bir kullanıcı var mı diye kontrol edilir.
-    if (!user) return res.status(400).json({ error: "Bu username (kullanıcı ismi) ile kayıtlı kullanıcı bulunamadı !!!" }); // Eğer kullanıcı bulunamazsa, error mesajı döner.
+    if (!user) return res.status(400).json({ error: "Bu username ile password eşleşmedi !!!" }); // Eğer kullanıcı bulunamazsa, error mesajı döner.
     const isMatch = await bcrypt.compare(password, user.password); // Girilen şifre ile veritabanındaki kayıtlı olan hashlenmiş şifreyle karşılaştırılır.
     if (!isMatch) return res.status(400).json({ error: "Girilen şifre yanlış!." }); // Eğer şifrelre birbiriyle eşleşmezse error mesajı döner.
     const token = jwt.sign({ owner: user._id, username: user.username }, process.env.JWT_SECRET, { expiresIn: "7d" });
@@ -70,13 +70,19 @@ app.get("/todos", auth, async (req, res) => {
     const page = parseInt(req.query.page) || 1; // URL'den page parametresi al, yoksa otomatik olarak 1.sayfa olur.Yani kaçıncı sayfa isteniyorsa onu veriyor.
     const limit = parseInt(req.query.limit) || 10; // URL'den limit parametresi al, yoksa otomatik olarak 10'da olur.Yani her sayfada kaç tane todo olacağını belirliyor.
     const search = (req.query.search || "").trim(); //URL'den search parametresi alıyor, yoksa boş tring döner, burada mantık arama kelimesidir..trim() ile Elinde kalan stringin başındaki ve sonundaki boşlukları siler.
-
+    const shouldHideCompleted = req.query.shouldHideCompleted === "true";
     const skip = (page - 1) * limit; // İstenen sayfaya kadar kaç tane todo'nun atlayacağını hesaplar.
 
     const query = { owner: req.user.owner, ...(search ? { title: { $regex: search, $options: "i" } } : {}) };
+
+    if (shouldHideCompleted) {
+      query.completed = { $ne: true }
+    }
+
     //query nesnesi oluşturuldu. title alanında search kelimeyi arar, regex (regular expression=düzenli ifade) ile arar.
     //$options: "i" kısmında ise büyük-küçük harf duyarsız (case-insensitive) vardır.Yani bu satırda amaç title'da aradığın kelimeleri geçen todo'ları bulmaktır.
     // Eğer arama yoksa tüm todo'ları getirir.
+
     const totalTodos = await Todo.countDocuments(query);
     // Veritabanında query'e göre kaç tane todo olduğunu sayar, await ile bitmesi beklenir sonuç sayı olarak döner.
     // Eğer arama varsa ona uygun olarak sadece filtrelenenlerin sayısını gösterir.

@@ -1,5 +1,6 @@
-const baseUrl = "http://192.168.68.65:5000"
-const apiFetch = function (path, options = {}) {
+const baseUrl = "http://167.99.193.95:5000";
+
+export function apiFetch(path, options = {}) {
 
     const url = baseUrl + path;
     const token = localStorage.getItem("token");
@@ -19,8 +20,4 @@ const apiFetch = function (path, options = {}) {
             }
             return res.json();
         });
-}
-
-module.exports = {
-    apiFetch,
 }

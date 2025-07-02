@@ -1,13 +1,13 @@
-import React, { useState, useEffect, use } from "react"; // React kütüphanesi ve gerekli hook'lar (useState,useEffect) içe aktarıldı.
+import React, { useState, useEffect } from "react"; // React kütüphanesi ve gerekli hook'lar (useState,useEffect) içe aktarıldı.
+import { apiFetch } from "./apiFetch";
+
 function App() {
   // Ana fonksiyonel bileşen tanımlandı.
-  const baseUrl = "http://localhost:5000"
   const [token, setToken] = useState(localStorage.getItem("token") || "");
   const [loginMode, setLoginMode] = useState(true); // true: login, false: register
   const [authInfo, setAuthInfo] = useState({ username: "", password: "" });
   const [errorMsg, setErrorMsg] = useState("");
   const [hideCompleted, setHideCompleted] = useState(false);
-  const { apiFetch } = require("./apiFetch")
   const [newestFirst, setNewestFirst] = useState(true)
   const [searchTerm, setSearchTerm] = useState("");
 
@@ -214,7 +214,7 @@ function App() {
       setErrorMsg("Başlık gerekli, lütfen bu alanı doldurun.!");
       return;
     }
-    apiFetch(`${baseUrl}/todos/${id}`, {
+    apiFetch(`/todos/${id}`, {
       method: "PUT", // HTTP isteiğinin türü PUT olarak ayarlanır.
       body: JSON.stringify({ title: editTitle }), // Güncelleme için yeni title içeren bir JSON string yapısında body kısmına ekler.strinfiy ile nesneyi JSON formatına çevirildi.
     })

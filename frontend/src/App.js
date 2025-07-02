@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react"; // React kütüphanesi ve gerekli hook'lar (useState,useEffect) içe aktarıldı.
 import { apiFetch } from "./apiFetch";
+import  ToggleSwitch  from "./ToggleSwitch";
 
 function App() {
   // Ana fonksiyonel bileşen tanımlandı.
@@ -282,21 +283,18 @@ function App() {
         onChange={e => setSearchTerm(e.target.value)} // Her değişiklikte search güncellenir.
         style={{ marginTop: "10px", marginBottom: "10px" }} // Arama kutusunun üst-alt boşlukl ayarları.
       />
-      <button
-        type="button"
-        onClick={() => {
-          setHideCompleted((prev) => !prev);
-          setErrorMsg("");
-        }}>
-        {hideCompleted ? "Tamamlanan Todoları Göster" : "Tamamlanan Todoları Gizle"}
-      </button>
-      <button
-        type="button"
-        style={{ marginLeft: "10 px" }}
-        onClick={() => setNewestFirst((prev => !prev))}
-      >
-        {newestFirst ? "↕ Eski Todoları Göster" : "↕ Yeni Todoları Göster"}
-      </button>
+      <div style={{display:"flex",gap:"12px",margin:"16px 0"}}>
+        <ToggleSwitch
+        label={hideCompleted ? "Tamamlanan Todoları Göster" : "Tamamlanan Todoları Gizle" }
+        chechked={hideCompleted}
+        onChange={()=> setHideCompleted((prev)=>!prev)}
+        />
+        <ToggleSwitch
+        label={newestFirst ? "↕ Eski Todoları Göster" :  "↕ Yeni Todoları Göster"}
+        chechked={newestFirst}
+        onChange={()=> setNewestFirst((prev)=>!prev)}
+        />
+      </div>
       <ul>
         {" "}
         {/* unordered list yani todo maddelerini liste halinde gösterecek kapsayıcı, yapılacaklar listesi için bir sırasız liste */}

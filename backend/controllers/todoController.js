@@ -13,12 +13,12 @@ exports.getTodos = async (req, res) => {
 };
 
 // POST/ todos
-exports.postTodo = async (req, res) => {
+exports.createTodo = async (req, res) => {
     const { error } = todoTitleValidate(req.body);
     if (error) return res.status(400).json({ error });
 
     try {
-        const newTodo = await todoService.postTodo(req.body.title, req.user.owner);
+        const newTodo = await todoService.createTodo(req.body.title, req.user.owner);
         res.status(201).json(newTodo);
     }
     catch (error) {
@@ -40,7 +40,7 @@ exports.updateTodo = async (req, res) => {
     } catch (error) {
         res.status(500).json({ error: "Sunucu hatası !!" });
     }
-};
+}
 
 //DELETE/ todos/:id
 exports.deleteTodo = async (req, res) => {

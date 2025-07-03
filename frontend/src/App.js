@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react"; // React kütüphanesi ve gerekli hook'lar (useState,useEffect) içe aktarıldı.
 import { apiFetch } from "./apiFetch";
-import  ToggleSwitch  from "./ToggleSwitch";
+import ToggleSwitch from "./ToggleSwitch";
 
 function App() {
   // Ana fonksiyonel bileşen tanımlandı.
@@ -283,16 +283,16 @@ function App() {
         onChange={e => setSearchTerm(e.target.value)} // Her değişiklikte search güncellenir.
         style={{ marginTop: "10px", marginBottom: "10px" }} // Arama kutusunun üst-alt boşlukl ayarları.
       />
-      <div style={{display:"flex",gap:"12px",margin:"16px 0"}}>
+      <div style={{ display: "flex", gap: "12px", margin: "16px 0" }}>
         <ToggleSwitch
-        label={hideCompleted ? "Tamamlanan Todoları Göster" : "Tamamlanan Todoları Gizle" }
-        chechked={hideCompleted}
-        onChange={()=> setHideCompleted((prev)=>!prev)}
+          label={hideCompleted ? " 👀 Tamamlanan Todoları Göster" : " 🙈 Tamamlanan Todoları Gizle"}
+          chechked={hideCompleted}
+          onChange={() => setHideCompleted((prev) => !prev)}
         />
         <ToggleSwitch
-        label={newestFirst ? "↕ Eski Todoları Göster" :  "↕ Yeni Todoları Göster"}
-        chechked={newestFirst}
-        onChange={()=> setNewestFirst((prev)=>!prev)}
+          label={newestFirst ? "⬇️ Eski Todoları Göster" : "⬆️ Yeni Todoları Göster"}
+          chechked={newestFirst}
+          onChange={() => setNewestFirst((prev) => !prev)}
         />
       </div>
       <ul>
@@ -331,7 +331,7 @@ function App() {
                 {todo.completed ? "Geri Al" : "Tamamlandı"}
               </button>
               {/* Butona tıklanınca ilgili todo'nun id'siyle handleComplete fonksiyonu çağıırlır.  */}
-              <button onClick={() => handleDelete(todo._id)}>SİL</button>{" "}
+              <button onClick={() => handleDelete(todo._id)}>Sil</button>{" "}
               {/* Butona tıklanınca ilgili todo'nun id'siyle handleDelete fonksiyonu çağrılır. */}
             </li>
           )

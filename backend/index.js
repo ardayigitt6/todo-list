@@ -23,7 +23,7 @@ app.post("/logout", auth, authController.logout);
 
 // TODO routes
 app.get("/todos", auth, todoController.getTodos);
-app.post("/todos", auth, todoController.postTodo);
+app.post("/todos", auth, todoController.createTodo);
 app.put("/todos/:id", auth, todoController.updateTodo);
 app.delete("/todos/:id", auth, todoController.deleteTodo);
 app.patch("/todos/:id/complete", auth, todoController.toggleComplete);

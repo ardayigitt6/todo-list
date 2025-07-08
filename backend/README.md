@@ -78,6 +78,8 @@ Kullanıcılar yeni görev ekleyebilir, güncelleyebilir, tamamlandığını iş
 ## Lisans
 - Bu proje [MIT Lisansı](LICENSE) ile lisanslanmıştır.  
 
+echo "# Test Deploy" >> README.md
+
 
 
 

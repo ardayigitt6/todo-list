@@ -32,7 +32,7 @@ app.patch("/todos/:id/complete", auth, todoController.toggleComplete);
 app.get("/", (req, res) => { // Ana sayfa için GET endpoint'i.
   res.send("Merhaba, To-Do backend çalışıyor."); // Ana sayfada karşılama için mesaj döner.
 });
-app.listen(5000, () => { // Sunucuyu 5000 portunda dinlemeye başlar.
+app.listen(5000, "0.0.0.0", () => { // Sunucuyu 5000 portunda dinlemeye başlar.
   console.log("Sunucu 5000 portunda çalışıyor."); // Sunucu başarılı bir şekilde çalıştığında konsola bu mesaj yazdırır.
 });
 
